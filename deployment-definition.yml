@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: 2048-deployment
+  labels:
+    app: mygameapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: 2048-ws
+  template:
+    metadata:
+      labels:
+        app: 2048-ws
+    spec:
+      affinity:             
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: color  
+                operator: In
+                values:
+                - blue
+      containers:
+      - name: 2048-container
+        image: blackicebird/2048
+        ports:
+        - containerPort: 80 

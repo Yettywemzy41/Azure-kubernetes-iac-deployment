@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+   name: mygame2048-svc
+spec:
+   selector:
+      app: 2048-ws
+   type: LoadBalancer
+   ports:
+    - protocol: TCP
+      targetPort: 80
+      port: 80
+      

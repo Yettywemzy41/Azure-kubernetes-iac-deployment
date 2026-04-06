@@ -1,0 +1,19 @@
+# Terraform local state (even if using remote, these can appear as backups)
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+
+# Execution plans
+tfplan
+tfplan.json
+
+# SSH Keys - DO NOT PUSH THESE
+id_rsa
+id_rsa.pub
+*.pem
+
+# Binary and log files
+.terraform.lock.hcl
+terraform.log
