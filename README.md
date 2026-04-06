@@ -5,6 +5,28 @@ Production-ready Kubernetes environment using Terraform, implementing Node Affin
 ## Project Overview
 This project demonstrates a production-grade deployment of an Azure Kubernetes Service (AKS) cluster using **Infrastructure as Code (IaC)**. The architecture features a remote state backend, multi-node pool configuration, and advanced Kubernetes scheduling using **Node Affinity**. The final workload is a containerized '2048' web application exposed via an Azure Standard Load Balancer.
 
+Security Architecture & State Management
+A primary goal of this project was to implement a Zero-Trust approach to infrastructure secrets.
+
+1. "Secretless" SSH Key Generation
+Instead of generating a local SSH key pair (which risks accidental leakage to GitHub), I utilized the AzAPI Provider to generate the key pair dynamically within the Azure platform.
+
+The Logic: The ssh.tf manifest contains the instructions to create the key, but never the key itself.
+
+The Benefit: The private key exists only as a sensitive attribute within the Terraform State, ensuring no physical id_rsa file ever touches the local disk or the version control system.
+
+2. Remote State as a Security Barrier
+By configuring a Remote Backend (Azure Blob Storage), the "Source of Truth" for the infrastructure—including the generated SSH private keys—is moved off the local machine.
+
+State Encryption: The state is stored in an encrypted Azure Storage container.
+
+Identity-Based Access: Access to the state file is restricted via Azure RBAC. Only my authenticated identity (with the Storage Blob Data Owner role) can pull the state.
+
+GitHub Safety: Because the state file is remote, there is zero risk of pushing sensitive infrastructure metadata or private keys to the public repository.
+
+3. RBAC over Static Keys
+I intentionally bypassed using static Storage Account Keys for backend authentication. Instead, I enabled use_azuread_auth = true. This ensures that even if the Storage Account URL is known, it cannot be accessed without a valid, timed-out Azure AD token.
+
 ## Architecture Highlights
 - **Infrastructure:** Terraform (v1.0+)
 - **Cloud Provider:** Azure (AZURRM & AZAPI Providers)
@@ -22,7 +44,7 @@ This project demonstrates a production-grade deployment of an Azure Kubernetes S
 ├── aks-cluster.tf          # AKS Cluster and Secondary Node Pool (Blue Pool)
 ├── providers.tf            # Backend configuration for State Locking
 ├── deployment-definition.yml # Kubernetes Deployment with Node Affinity
-└── service-definition.yml    # Kubernetes LoadBalancer Service
+└── svc.yml    # Kubernetes LoadBalancer Service
 ```
 
 ## Technical Implementation Details
@@ -84,11 +106,10 @@ kubectl get service mygame2048-svc
 ```
 
 ## Results
-The application is accessible at the Public VIP: **20.22.167.40**.
+The application is live and accessible at: [http://20.22.167.40](http://20.22.167.40)
 The deployment successfully demonstrated:
 1. **Immutable Infrastructure** deployment via Terraform.
 2. **Dynamic Scaling** and self-healing of pod replicas.
 3. **Advanced Scheduling** via Node Affinity.
 
 ---
-*Created as part of a transition from Technical Support to Cloud Engineering, focusing on end-to-end ownership of cloud-native environments.*
